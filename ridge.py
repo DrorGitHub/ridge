@@ -189,7 +189,7 @@ def ridge_corr(Rstim, Pstim, Rresp, Presp, alphas, normalpha=False, corrmin=0.2,
 
 def bootstrap_ridge(Rstim, Rresp, Pstim, Presp, alphas, nboots, chunklen, nchunks,
                     corrmin=0.2, joined=None, singcutoff=1e-10, normalpha=False, single_alpha=False,
-                    use_corr=True, logger=ridge_logger):
+                    use_corr=True, logger=ridge_logger,rng_seed=None):
     """Uses ridge regression with a bootstrapped held-out set to get optimal alpha values for each response.
     [nchunks] random chunks of length [chunklen] will be taken from [Rstim] and [Rresp] for each regression
     run.  [nboots] total regression runs will be performed.  The best alpha value for each response will be
@@ -248,7 +248,11 @@ def bootstrap_ridge(Rstim, Rresp, Pstim, Presp, alphas, nboots, chunklen, nchunk
         this can make a big difference -- highly regularized solutions will have very small norms and
         will thus explain very little variance while still leading to high correlations, as correlation
         is scale-free while R**2 is not.
-    
+    rng_seed : None or int
+        If int then initialize the random random num generator. This allows identically repeating the
+        fitting procedure.
+        fitting procedure.
+
     Returns
     -------
     wt : array_like, shape (N, M)
@@ -267,7 +271,10 @@ def bootstrap_ridge(Rstim, Rresp, Pstim, Presp, alphas, nboots, chunklen, nchunk
     """
     nresp, nvox = Rresp.shape
     valinds = [] # Will hold the indices into the validation data for each bootstrap
-    
+
+    # initialize random num generator
+    random.seed(a=rng_seed)
+
     Rcmats = []
     for bi in counter(range(nboots), countevery=1, total=nboots):
         logger.info("Selecting held-out test set..")
